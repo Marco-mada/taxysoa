@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support technique
+    url: https://github.com/your-org/your-repo/discussions
+    about: Obtenir de l'aide technique ou poser des questions
+  - name: Documentation
+    url: https://github.com/your-org/your-repo/wiki
+    about: Consulter la documentation du projet 
