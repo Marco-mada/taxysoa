@@ -19,6 +19,11 @@
                         </div>
 
                         <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Téléphone</label>
+                            <input type="tel" name="phone" id="phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+
+                        <div>
                             <label for="message" class="block text-sm font-medium text-gray-700">Message</label>
                             <textarea name="message" id="message" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
                         </div>
@@ -29,6 +34,13 @@
                             </button>
                         </div>
                     </form>
+
+                    <div class="mt-8 border-t pt-4">
+                        <h2 class="text-xl font-semibold mb-2">Nos coordonnées</h2>
+                        <p>Téléphone : +261 34 12 345 67</p>
+                        <p>Email : contact@taxysoa.com</p>
+                        <p>Adresse : Antananarivo, Madagascar</p>
+                    </div>
                 </div>
             </div>
         </div>
