@@ -1,4 +1,4 @@
-name: Tests
+name: Tests Automatiques
 
 on:
   push:
@@ -7,11 +7,13 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  test:
+  tests:
+    name: Tests unitaires et d'intégration
     runs-on: ubuntu-latest
+    
     services:
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         env:
           MYSQL_DATABASE: taxysoa_test
           MYSQL_ROOT_PASSWORD: root
@@ -20,31 +22,58 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql
-          coverage: xdebug
-          
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-          
-      - name: Install dependencies
-        run: |
-          composer install --prefer-dist --no-ansi --no-interaction --no-progress --no-scripts
-          npm ci
-          
-      - name: Execute tests
-        env:
-          DB_CONNECTION: mysql
-          DB_DATABASE: taxysoa_test
-          DB_USERNAME: root
-          DB_PASSWORD: root
-        run: |
-          php artisan test
-          npm run test 
+    - uses: actions/checkout@v2
+
+    - name: Configuration de PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, dom, fileinfo, mysql
+        coverage: xdebug
+
+    - name: Configuration de Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '18'
+
+    - name: Copie du fichier .env
+      run: cp .env.example .env
+
+    - name: Installation des dépendances Composer
+      run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    - name: Installation des dépendances NPM
+      run: npm ci
+
+    - name: Génération de la clé
+      run: php artisan key:generate
+
+    - name: Répertoires de stockage
+      run: php artisan storage:link
+
+    - name: Migrations de base de données
+      run: php artisan migrate --force
+      env:
+        DB_CONNECTION: mysql
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_DATABASE: taxysoa_test
+        DB_USERNAME: root
+        DB_PASSWORD: root
+
+    - name: Tests PHPUnit
+      run: vendor/bin/phpunit --coverage-text
+      env:
+        DB_CONNECTION: mysql
+        DB_HOST: 127.0.0.1
+        DB_DATABASE: taxysoa_test
+        DB_USERNAME: root
+        DB_PASSWORD: root
+
+    - name: Tests Frontend
+      run: npm run test
+
+    - name: Analyse statique du code
+      run: |
+        composer require --dev phpstan/phpstan
+        vendor/bin/phpstan analyse app tests --level=5 

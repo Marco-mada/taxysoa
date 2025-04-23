@@ -1,27 +1,35 @@
-name: Deploy
+name: Déploiement Automatique
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
+    name: Déploiement en production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
-      - name: Setup PHP
+
+      - name: Configuration de PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
-          
-      - name: Install dependencies
+          php-version: '8.2'
+          extensions: mbstring, dom, fileinfo, mysql
+
+      - name: Configuration de Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Installation des dépendances
         run: |
-          composer install --prefer-dist --no-dev --no-ansi --no-interaction --no-progress --no-scripts
+          composer install --no-dev --optimize-autoloader --no-interaction
           npm ci
           npm run build
-          
-      - name: Deploy to production
+
+      - name: Déploiement via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -30,7 +38,21 @@ jobs:
           script: |
             cd /var/www/taxysoa
             git pull origin main
-            composer install --no-dev
-            php artisan migrate --force
+            composer install --no-dev --optimize-autoloader
+            php artisan optimize:clear
             php artisan optimize
-            npm run build 
+            php artisan migrate --force
+            php artisan storage:link
+            npm ci
+            npm run build
+            sudo systemctl restart php8.2-fpm
+            sudo systemctl restart nginx
+
+      - name: Notification Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always() 

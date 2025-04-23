@@ -1,0 +1,50 @@
+name: Notifications Slack
+
+on:
+  pull_request:
+    types: [opened, closed, reopened]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notification Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          custom_payload: |
+            {
+              attachments: [{
+                color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+                text: `${process.env.AS_WORKFLOW}\n${process.env.AS_MESSAGE}`,
+                fields: [
+                  {
+                    title: 'Repository',
+                    value: process.env.AS_REPO,
+                    short: true
+                  },
+                  {
+                    title: 'Event',
+                    value: process.env.AS_EVENT_NAME,
+                    short: true
+                  },
+                  {
+                    title: 'Author',
+                    value: process.env.AS_AUTHOR,
+                    short: true
+                  },
+                  {
+                    title: 'Branch',
+                    value: process.env.AS_REF,
+                    short: true
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always() 
