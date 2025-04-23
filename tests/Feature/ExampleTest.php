@@ -16,4 +16,11 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_the_application_has_correct_title(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertSee('TaxySoa');
+    }
 }
